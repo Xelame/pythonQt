@@ -1,17 +1,22 @@
-from PySide6.QtWidgets import QSlider, QApplication, QMainWindow
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtWidgets import QAbstractSlider, QSlider, QApplication, QMainWindow
 from pydub import AudioSegment
 from PySide6.QtCore import Qt, Slot, QTimer
 import pyaudio
 import wave
 import sys
-import time
+import os
+
 
 class SeekSlider(QSlider):
 
     def __init__(self):
         super().__init__()
 
-        self.audio : AudioSegment = AudioSegment.from_file("/home/xelame/Music/Fuji Kaze/michi-teyu-ku-overflowing-official-video.wav")
+        self._current_time = 0
+        self._current_position = 0
+
+        self.audio : AudioSegment = AudioSegment.from_file("/home/xelame/Music/Fuji Kaze/Fujii Kaze - Michi Teyu Ku (Overflowing).mp4")
 
         # Exporter le fichier MP3 en WAV
         self.audio.export('output.wav', format='wav')
@@ -22,7 +27,7 @@ class SeekSlider(QSlider):
         p = pyaudio.PyAudio()
 
         # Open stream using callback (3)
-        self._stream = p.open(format=p.get_format_from_width(self.wf.getsampwidth()),
+        self._stream : pyaudio._Stream = p.open(format=p.get_format_from_width(self.wf.getsampwidth()),
                         channels=self.wf.getnchannels(),
                         rate=self.wf.getframerate(),
                         output=True,
@@ -34,8 +39,6 @@ class SeekSlider(QSlider):
 
         self.setOrientation(Qt.Orientation.Horizontal)
 
-        self._current_time = time.time()
-
         # Créer un temporisateur pour mettre à jour la position de lecture régulièrement
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_slider_position())
@@ -44,6 +47,10 @@ class SeekSlider(QSlider):
     def _callback(self, in_data, frame_count, time_info, status):
         data = self.wf.readframes(frame_count)
         self.update_slider_position()
+        """
+        print("\033[H\033[J", end="")
+        print(self.getPosition(), " %")
+        """
         return (data, pyaudio.paContinue)
     
     def pause(self):
@@ -54,18 +61,37 @@ class SeekSlider(QSlider):
         if self._stream.is_stopped():
             self._stream.start_stream()
     
-    def update_slider_position(self):
-        # Mettre à jour la position du curseur en fonction de la position de lecture
-        position = self._stream.get_time() - self._current_time
-        value = int(position / self.audio.duration_seconds * self.maximum())
-        print("Position : ", position, " audio.lenght : ", self.audio.duration_seconds,  " max : ", self.maximum(), " value : ", value)
-        self.setValue(value)
-        self.setSliderPosition(value)
+    # Mettre à jour la position du curseur en fonction de la position de lecture
+    def update_slider_position(self) -> None:
+        self.updatePosition()
 
-    @Slot(int)
-    def position(self):
-        return self.wf.tell()
+        # self.setSliderPosition(position) -> même chose que setValue mais avec un signal
+        self.setValue(self._current_position)
 
+    def updatePosition(self):
+        self._current_time = int(self.wf.tell() / (self.wf.getframerate() * self.wf.getsampwidth()) * self.wf.getnchannels())
+        self._current_position = int(self._current_time / self.audio.duration_seconds * 100) 
+        
+    
+    def closeEvent(self, event: QCloseEvent) -> None:
+        print("Fermeture de l'application")
+        self._stream.stop_stream()
+        self._stream.close()
+        # os.remove('output.wav')
+        return super().closeEvent(event)
+    
+    def positionToTime(self, position : float) -> float:
+        return position / self.maximum() * self.audio.duration_seconds
+    
+    def timeToPosition(self, time : float) -> float:
+        return time / self.audio.duration_seconds * self.maximum()
+    
+    def sliderChange(self, change: QAbstractSlider.SliderChange) -> None:
+        print("\033[H\033[J", end="")
+        print(self._current_position, "%")
+        print(self._current_time, "s")
+        return super().sliderChange(change)
+    
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = QMainWindow()

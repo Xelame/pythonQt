@@ -21,17 +21,20 @@ class AudioPlayer(QMainWindow):
 
 
         # Créer la mise en page
-        layoutH = QHBoxLayout()
-        layoutH.addWidget(self.playButton)
-        layoutH.addWidget(self.pauseButton)
-        layoutH.addWidget(self.stopButton)
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addWidget(self.playButton)
+        layout_horizontal.addWidget(self.pauseButton)
+        layout_horizontal.addWidget(self.stopButton)
 
-        layoutV = QVBoxLayout()
-        layoutV.addWidget(self.slider)
-        layoutV.addLayout(layoutH)
+        self.playButton.clicked.connect(self.slider.start)
+        self.pauseButton.clicked.connect(self.slider.pause)
+
+        layout_vertical = QVBoxLayout()
+        layout_vertical.addWidget(self.slider)
+        layout_vertical.addLayout(layout_horizontal)
 
         central_widget = QWidget()
-        central_widget.setLayout(layoutV)
+        central_widget.setLayout(layout_vertical)
         self.setCentralWidget(central_widget)
 
         
