@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QFileDialog
 import os
 
 class FileSelector(QFileDialog):
-    def __init__(self, type):
+    def __init__(self):
         super().__init__()
 
     def open_file(self):

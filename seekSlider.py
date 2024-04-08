@@ -1,11 +1,10 @@
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QAbstractSlider, QSlider, QApplication, QMainWindow
 from pydub import AudioSegment
-from PySide6.QtCore import Qt, Slot, QTimer
+from PySide6.QtCore import Qt, QTimer
 import pyaudio
 import wave
 import sys
-import os
 
 
 class SeekSlider(QSlider):
@@ -60,6 +59,10 @@ class SeekSlider(QSlider):
     def start(self):
         if self._stream.is_stopped():
             self._stream.start_stream()
+
+    def stop(self):
+        self.pause()
+        self._stream.close()
     
     # Mettre à jour la position du curseur en fonction de la position de lecture
     def update_slider_position(self) -> None:

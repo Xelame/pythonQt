@@ -1,6 +1,7 @@
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget
 from PySide6.QtCore import SIGNAL
-from toolbar import ToolBar
+from menubar import MyMenuBar
 import sys
 from seekSlider import SeekSlider
 
@@ -10,8 +11,8 @@ class AudioPlayer(QMainWindow):
 
         self.setWindowTitle("Lecteur audio")
 
-        toolbar = ToolBar()
-        self.addToolBar(toolbar)
+        self.menuBar = MyMenuBar()
+        self.setMenuBar(self.menuBar)
 
         # Créer les boutons de contrôle
         self.playButton = QPushButton("Play")
@@ -36,6 +37,10 @@ class AudioPlayer(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(layout_vertical)
         self.setCentralWidget(central_widget)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.slider.stop()
+        return super().closeEvent(event)
 
         
 
